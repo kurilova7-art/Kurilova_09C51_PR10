@@ -1,4 +1,4 @@
-from people import AnketaError, Student, Teacher
+from people import AnketaError, Student, Teacher, Person
 
 
 class Registry:
@@ -88,6 +88,34 @@ class Registry:
             if name.lower().endswith(".txt"):
                 return name
             print("Нужно расширение .txt")
+
+    def poluchit(self, nomer):
+        """Возвращает анкету по номеру, считая с единицы, или None"""
+        if 0 < nomer <= len(self.accepted):
+            return self.accepted[nomer - 1]
+        return None
+
+    def zamenit(self, nomer, person):
+        """Заменяет анкету, возвращает True или False"""
+        if 0 < nomer <= len(self.accepted):
+            self.accepted[nomer - 1] = person
+            return True
+        return False
+
+    def udalit(self, nomer):
+        """Убирает анкету и возвращает её, или None"""
+        if 0 < nomer <= len(self.accepted):
+            return self.accepted.pop(nomer - 1)
+        return None
+
+    def save_all(self, filename):
+        """Пишет принятые анкеты через v_stroku, затем брак"""
+        with open(filename, "w", encoding="utf-8") as f:
+            for p in self.accepted:
+                f.write(p.v_stroku() + "\n")
+            for _n, raw, _reason in self.rejected:
+                f.write(raw + "\n")
+
 
 
 if __name__ == "__main__":

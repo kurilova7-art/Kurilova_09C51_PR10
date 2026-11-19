@@ -4,6 +4,7 @@ class AnketaError(Exception):
 
 class Person:
     """Базовый класс - человек, с проверками ФИО, почты и телефона"""
+    TIP = "?"
     def __init__(self, fio: str, email: str, phone: str) -> None:
         self.fio = self._validate_fio(fio)
         self.email = self._validate_email(email)
@@ -68,6 +69,11 @@ class Person:
         """Доп информация"""
         pass
 
+    def v_stroku(self):
+        """Обратно в строку файла: тип;ФИО;почта;телефон;доп."""
+        return ";".join([self.TIP, self.fio, self.email,
+                         self.phone, self.extra()])
+
     def __str__(self) -> str:
         return self.fio
 
@@ -84,6 +90,7 @@ class Student(Person):
     def __init__(self, fio: str, email: str, phone: str, group: str) -> None:
         super().__init__(fio, email, phone)
         group = group.strip().lower()
+        self.TIP = "s"
 
         if not group:
             raise AnketaError("Группа пустая")
@@ -103,6 +110,7 @@ class Teacher(Person):
     def __init__(self, fio: str, email: str, phone: str, department: str) -> None:
         super().__init__(fio, email, phone)
         department = department.strip()
+        self.TIP = "t"
 
         if not department:
             raise AnketaError("Кафедра пустая")
@@ -117,7 +125,7 @@ class Teacher(Person):
         return self.department
 
 
-if __name__ == "__name__":
+if __name__ == "__main__":
     student = Student("белов максим", "belov@yandex.ru", "89113334455", "10а12")
 
     assert student.phone == "79113334455"
