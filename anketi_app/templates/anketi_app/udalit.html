@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Удалить анкету{% endblock %}
+
+{% block content %}
+    <h2>Вы уверены что хотите удалить №{{ nomer }} {{ fio }}?</h2>
+    <form method="post">
+        <button type="submit">Удалить</button>
+    </form>
+    <div><a href="{{ url_for('index') }}">Отмена</a></div>
+{% endblock %}
