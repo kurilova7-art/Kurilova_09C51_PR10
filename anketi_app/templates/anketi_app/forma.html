@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Добавить анкету{% endblock %}
+{% block title %}{{ zagolovok }}{% endblock %}
 
 {% block content %}
-    <h1>Добавление анкеты</h1>
+    <h1>{{ zagolovok }}</h1>
 
-    <form method="post" action="{{ url_for('dobavit_post') }}">
+    <form method="post" action="{{ deystvie }}">
         <label for="role">Выберите роль</label>
         <select id="role" name="role">
             <option value="s" {% if role == 's' %}selected{% endif %}>Студент</option>
@@ -16,7 +16,7 @@
         <input type="tel" name="phone" placeholder="Номер телефона" value="{{ phone or '' }}">
         <input type="text" name="extra" placeholder="Группа/Кафедра" value="{{ extra or '' }}">
 
-        <button type="submit">Добавить анкету</button>
+        <button type="submit">{{ zagolovok }}</button>
     </form>
 {% endblock %}
 

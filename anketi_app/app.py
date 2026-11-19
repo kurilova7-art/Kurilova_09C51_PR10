@@ -8,13 +8,18 @@
     GET  /statistika              сводки по ролям, группам и отклоненным анкетам
     GET  /dobavit                 форма добавления анкеты
     POST /dobavit                 принимает форму и добавляет к принятым анкетам
+    GET  /anketi/<номер>/izmenit  форма, заполненная данными этой анкеты
+    POST /anketi/<номер>/izmenit  проверка и замена; при удаче - перенаправление на страницу анкеты
+    GET  /anketi/<номер>/udalit   страница подтверждения с ФИО и кнопкой
+    POST /anketi/<номер>/udalit   удаление, сохранение и перенаправление на список
 
 Ручки с api, возвращают в JSON:
-    GET  /api/anketi              все анкеты студентов с параметром rol=s, либо все анкеты
-    GET  /api/anketi/<int:nomer>  анкета по номеру
-    GET  /api/statistika          таблица анкет по группам/кафедрам
-    GET  /api/brak                отклоненные анкеты
-    POST /api/anketi              принимает анкету
+    GET    /api/anketi              все анкеты студентов с параметром rol=s, либо все анкеты
+    GET    /api/anketi/<int:nomer>  анкета по номеру
+    GET    /api/statistika          таблица анкет по группам/кафедрам
+    GET    /api/brak                отклоненные анкеты
+    POST   /api/anketi              принимает анкету
+    DELETE /api/anketi/<номер>      удаление для программы
 """
 
 from flask import Flask, current_app, render_template, abort, request, flash, url_for, redirect, jsonify
@@ -29,18 +34,21 @@ from people import Student, Teacher, AnketaError
 load_dotenv()
 app = Flask(__name__, template_folder="templates/anketi_app")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev")
+FAYL = "anketa.txt"
 
 
 zhurnal = Registry()
-if not zhurnal.load("anketa.txt"):
+if not zhurnal.load(FAYL):
     print("ВНИМАНИЕ: файл не найден, журнал пуст")
 
 app.zhurnal = zhurnal
+def sohranit():
+    current_app.zhurnal.save_all(FAYL)
 
 
 @app.errorhandler(HTTPException)
 def any_error(e):
-    """Принимает любую ошибку и возвращает страницу с этой ошибке"""
+    """Принимает любую ошибку и возвращает страницу с этой ошибкой"""
     if e.code >= 500:
         message = "Ошибка сервера"
         print("ОШИБКА:", e.code, e.description)
@@ -64,7 +72,7 @@ def anketa_by_nomer(nomer):
     """Возвращает страницу с анкетой по номеру"""
     accepted = current_app.zhurnal.accepted
     if not 1 <= nomer <= len(accepted):
-        abort(404)
+        abort(404, description="Анкета с таким номером не найдена")
     person = accepted[nomer - 1]
     return render_template("anketa_by_nomer.html", nomer=nomer, person=person), 200
 
@@ -90,7 +98,7 @@ def statistika():
 @app.route("/dobavit")
 def dobavit_get():
     """Возвращает форму добавления анкеты"""
-    return render_template("dobavit.html"), 200
+    return render_template("forma.html", zagolovok="Добавить анкету", deystvie=url_for('dobavit_post')), 200
 
 
 @app.route("/dobavit", methods=["POST"])
@@ -104,7 +112,9 @@ def dobavit_post():
 
     if not fio or not email or not phone or not extra:
         flash("Заполните все поля", "error")
-        return render_template("dobavit.html", role=role, fio=fio, email=email, phone=phone, extra=extra), 400
+        return render_template("forma.html", zagolovok="Добавить анкету",
+                               role=role, fio=fio, email=email,
+                               phone=phone, extra=extra, deystvie=url_for('dobavit_post')), 400
 
     try:
         if role == "s":
@@ -115,10 +125,84 @@ def dobavit_post():
             raise AnketaError(f"Неизвестный тип: {role or '—'}")
     except AnketaError as e:
         flash(str(e), "error")
-        return render_template("dobavit.html", role=role, fio=fio, email=email, phone=phone, extra=extra), 400
+        return render_template("forma.html", zagolovok="Добавить анкету", role=role,
+                               fio=fio, email=email, phone=phone, extra=extra, deystvie=url_for('dobavit_post')), 400
 
     current_app.zhurnal.add(person)
-    flash("Анкета успешно добавлена", "success")
+    sohranit()
+    flash(f"Анкета «{person.fio}» добавлена", "success")
+    return redirect(url_for("index")), 302
+
+
+@app.route("/anketi/<int:nomer>/izmenit")
+def izmenit_get(nomer):
+    """Возвращает форму на изменение с заполненными данными"""
+    person = current_app.zhurnal.poluchit(nomer)
+    if person is None:
+        abort(404, description="Анкета с таким номером не найдена")
+
+    return render_template("forma.html", zagolovok=f"Изменить анкету №{nomer}",
+        nomer=nomer, role=person.TIP, fio=person.fio, email=person.email,
+        phone=person.phone, extra=person.extra(), deystvie=url_for("izmenit_post", nomer=nomer)), 200
+
+
+@app.route("/anketi/<int:nomer>/izmenit", methods=["POST"])
+def izmenit_post(nomer):
+    """Принимает данные из формы и заменяет анкету по номеру"""
+    person = current_app.zhurnal.poluchit(nomer)
+    if person is None:
+        abort(404, description="Анкета с таким номером не найдена")
+
+    role = request.form.get("role")
+    fio = request.form.get("fio")
+    email = request.form.get("email")
+    phone = request.form.get("phone")
+    extra = request.form.get("extra")
+
+    if not fio or not email or not phone or not extra:
+        flash("Заполните все поля", "error")
+        return render_template("forma.html", zagolovok=f"Изменить анкету №{nomer}",
+                               deystvie=url_for("izmenit_post", nomer=nomer),
+                               role=role, fio=fio, email=email,
+                               phone=phone, extra=extra), 400
+
+    try:
+        if role == "s":
+            person = Student(fio, email, phone, extra)
+        elif role == "t":
+            person = Teacher(fio, email, phone, extra)
+        else:
+            raise AnketaError(f"Неизвестный тип: {role or '—'}")
+    except AnketaError as e:
+        flash(str(e), "error")
+        return render_template("forma.html", zagolovok=f"Изменить анкету №{nomer}", role=role,
+                               deystvie=url_for("izmenit_post", nomer=nomer),
+                               fio=fio, email=email, phone=phone, extra=extra), 400
+
+    current_app.zhurnal.zamenit(nomer, person)
+    sohranit()
+    flash(f"Анкета №{nomer} изменена", "success")
+    return redirect(url_for("anketa_by_nomer", nomer=nomer)), 302
+
+
+@app.route("/anketi/<int:nomer>/udalit")
+def udalit_get(nomer):
+    """Возвращает страницу подтверждения удаления с ФИО и кнопкой"""
+    person = current_app.zhurnal.poluchit(nomer)
+    if person is None:
+        abort(404, description="Анкета с таким номером не найдена")
+
+    return render_template("udalit.html", nomer=nomer, fio=person.fio)
+
+
+@app.route("/anketi/<int:nomer>/udalit", methods=["POST"])
+def udalit_post(nomer):
+    """Удаляет анкету"""
+    anketa = current_app.zhurnal.udalit(nomer)
+    if anketa is None:
+        abort(404, description="Анкета с таким номером не найдена")
+    sohranit()
+    flash(f"Анкета «{anketa.fio}» удалена", "success")
     return redirect(url_for("index")), 303
 
 
@@ -143,14 +227,31 @@ def api_anketi():
     for i, p in enumerate(current_app.zhurnal.accepted, 1):
         if rol == "s" and p.role() == "Студент":
             result.append({
-                "№":  i,
-                "ФИО":    p.fio,
-                "Роль":   p.role(),
-                "Почта":  p.email,
-                "Телефон":  p.masked_phone(),
-                "Группа/Кафедра":  p.extra(),
+                "№": i,
+                "ФИО": p.fio,
+                "Роль": p.role(),
+                "Почта": p.email,
+                "Телефон": p.masked_phone(),
+                "Группа/Кафедра": p.extra(),
             })
     return jsonify(result), 200
+
+
+@app.route("/api/anketi/<int:nomer>", methods=["DELETE"])
+def anketi_delete(nomer):
+    """Удаляет анкету для программы и возвращает ее в JSON"""
+    anketa = current_app.zhurnal.udalit(nomer)
+    if anketa is None:
+        return jsonify({"Ошибка": "Анкета не найдена"}), 404
+
+    sohranit()
+    return jsonify({
+        "№": nomer,
+        "ФИО": anketa.fio,
+        "Роль": anketa.role(),
+        "Почта": anketa.email,
+        "Телефон": anketa.masked_phone(),
+        "Группа/Кафедра": anketa.extra()}), 200
 
 
 @app.route("/api/anketi/<int:nomer>")
@@ -242,6 +343,7 @@ def api_anketi_post():
     }
 
     current_app.zhurnal.add(person)
+    sohranit()
     return jsonify(result), 201
 
 

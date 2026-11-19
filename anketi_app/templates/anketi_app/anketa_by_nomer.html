@@ -25,5 +25,10 @@
                 <td>{{ person.masked_phone() }}</td>
             </tr>
         </table>
+
+    <div>
+        <a href="{{ url_for('izmenit_get', nomer=nomer) }}">Изменить</a>
+        <a href="{{ url_for('udalit_get', nomer=nomer) }}">Удалить</a>
+    </div>
 {% endblock %}
 
