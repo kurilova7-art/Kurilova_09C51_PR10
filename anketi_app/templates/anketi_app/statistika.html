@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Статистика{% endblock %}
+
+{% block content %}
+    {% if not role_stats %}
+        <p>Статистики по ролям нет</p>
+    {% else %}
+        <h2>Статистика по ролям</h2>
+        <table>
+                <tr>
+                    <td>Роль</td>
+                    <td>Количество</td>
+                </tr>
+                {% for role, count in role_stats.items() %}
+                    <tr>
+                        <td>{{ role }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+    {% endif %}
+
+    {% if not group_stats %}
+        <p>Статистики по группам нет</p>
+    {% else %}
+        <h2>Статистика по группам</h2>
+        <table>
+                <tr>
+                    <td>Группа</td>
+                    <td>Количество</td>
+                </tr>
+                {% for group, count in group_stats.items() %}
+                    <tr>
+                        <td>{{ group }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+    {% endif %}
+
+    {% if not rejected %}
+        <p>Отклоненных анкет нет</p>
+    {% else %}
+        <h2>Список отклоненных анкет</h2>
+        <table>
+                <tr>
+                    <td>№</td>
+                    <td>Анкета</td>
+                    <td>Причина</td>
+                </tr>
+                {% for n, raw, reason in rejected %}
+                    <tr>
+                        <td>{{ n }}</td>
+                        <td>{{ raw }}</td>
+                        <td>{{ reason }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+    {% endif %}
+{% endblock %}
+

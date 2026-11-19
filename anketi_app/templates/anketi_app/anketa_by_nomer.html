@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Анкета {{ nomer }}{% endblock %}
+
+{% block content %}
+    <h1>Анкета №{{ nomer }}</h1>
+    <table>
+            <tr>
+                <td>ФИО</td>
+                <td>{{ person.fio }}</td>
+            </tr>
+            <tr>
+                <td>Роль</td>
+                <td>{{ person.role() }}</td>
+            </tr>
+            <tr>
+                <td>Группа/Кафедра</td>
+                <td>{{ person.extra() }}</td>
+            </tr>
+            <tr>
+                <td>Почта</td>
+                <td>{{ person.email }}</td>
+            </tr>
+            <tr>
+                <td>Телефон</td>
+                <td>{{ person.masked_phone() }}</td>
+            </tr>
+        </table>
+{% endblock %}
+

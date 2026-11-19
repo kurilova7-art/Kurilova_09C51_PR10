@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+.idea/
+
+anketi_app/errors.txt
+anketi_app/ok.txt
+.env

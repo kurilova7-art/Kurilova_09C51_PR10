@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Список {{ title }}{% endblock %}
+
+{% block content %}
+    {% if not persons %}
+        <p>Этой группы/кафедры нет</p>
+    {% else %}
+        <h1>Список {{ title }}</h1>
+        <table>
+                <tr>
+                    <td>ФИО</td>
+                    <td>Роль</td>
+                    <td>Почта</td>
+                    <td>Группа/Кафедра</td>
+                    <td>Телефон</td>
+                </tr>
+                {% for i in persons %}
+                    <tr>
+                        <td>{{ i.fio }}</td>
+                        <td>{{ i.role() }}</td>
+                        <td>{{ i.email }}</td>
+                        <td>{{ i.extra() }}</td>
+                        <td>{{ i.masked_phone() }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+    {% endif %}
+{% endblock %}
+

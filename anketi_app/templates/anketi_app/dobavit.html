@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Добавить анкету{% endblock %}
+
+{% block content %}
+    <h1>Добавление анкеты</h1>
+
+    <form method="post" action="{{ url_for('dobavit_post') }}">
+        <label for="role">Выберите роль</label>
+        <select id="role" name="role">
+            <option value="s" {% if role == 's' %}selected{% endif %}>Студент</option>
+            <option value="t" {% if role == 't' %}selected{% endif %}>Преподаватель</option>
+        </select>
+
+        <input type="text" name="fio" placeholder="ФИО" value="{{ fio   or '' }}">
+        <input type="email" name="email" placeholder="Почта" value="{{ email or '' }}">
+        <input type="tel" name="phone" placeholder="Номер телефона" value="{{ phone or '' }}">
+        <input type="text" name="extra" placeholder="Группа/Кафедра" value="{{ extra or '' }}">
+
+        <button type="submit">Добавить анкету</button>
+    </form>
+{% endblock %}
+
