@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Главная страница{% endblock %}
+
+{% block content %}
+    {% if spisok  %}
+        <ul>
+            {% for i, f in spisok %}
+                <li>
+                    {{ f }}
+                    <a href="{{ url_for('izmenit', nomer=i) }}">изменить</a>
+                    <a href="{{ url_for('udalit', nomer=i) }}">удалить</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Список пуст</p>
+    {% endif %}
+{% endblock %}
+

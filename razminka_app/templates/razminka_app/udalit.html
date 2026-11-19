@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Удалить фамилию{% endblock %}
+
+{% block content %}
+    <p>Удалить фамилию {{ name }}?</p>
+    <form method="post">
+        <button type="submit">Удалить</button>
+    </form>
+    <a href="{{ url_for('index') }}">Отмена</a>
+{% endblock %}
